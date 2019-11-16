@@ -1,12 +1,29 @@
 import random
 
 class Ant:
-    posI=1
-    posJ=1
+   
     PosDispo=[]
     Caminho=[]
-            
-        
+
+
+    def __init__(self,origem,objetivo):
+        self.posJ=origem[0]
+        self.posI=origem[1]
+        self.ObjetivoJ=objetivo[0]
+        self.ObjetivoI=objetivo[1]
+        self.DistanciaEuclidiana()
+
+    def andar(self,proximo):
+        self.posJ=proximo[0]
+        self.posI=proximo[1]
+        self.Caminho.append([self.posJ,self.posI])
+        self.DistanciaEuclidiana()
+
+    def DistanciaEuclidiana(self):
+        distX= self.ObjetivoJ - self.posJ
+        distY= self.ObjetivoI - self.posI
+        self.dist=(distX**2+distY**2)**(0.5)
+         
     def caminhoLivre(self,matrix):
         if(matrix[self.posI][self.posJ+1]==0):
             self.PosDispo.append([self.posJ+1,self.posI])
@@ -20,10 +37,9 @@ class Ant:
         if(matrix[self.posI-1][self.posJ]==0):
             self.PosDispo.append([self.posJ,self.posI-1])
 
-    def andar(self,objetivo):
-        self.Caminho.append([self.posJ,self.posI])
-        self.posI=objetivo[1];
-        self.posJ=objetivo[0];
+    
+
+    
 
     
 
