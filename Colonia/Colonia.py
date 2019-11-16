@@ -5,24 +5,20 @@ class Ant:
     PosDispo=[]
     Caminho=[]
 
-
     def __init__(self,origem,objetivo):
         self.posJ=origem[0]
         self.posI=origem[1]
         self.ObjetivoJ=objetivo[0]
         self.ObjetivoI=objetivo[1]
-        self.DistanciaEuclidiana()
-
+        
     def andar(self,proximo):
         self.posJ=proximo[0]
         self.posI=proximo[1]
-        self.Caminho.append([self.posJ,self.posI])
-        self.DistanciaEuclidiana()
+        self.Caminho.append([self.posJ,self.posI])   
 
-    def DistanciaEuclidiana(self):
-        distX= self.ObjetivoJ - self.posJ
-        distY= self.ObjetivoI - self.posI
-        self.dist=(distX**2+distY**2)**(0.5)
+    def find(self):
+        if((self.PosI==self.ObjetivoI) and (self.PosJ==self.ObjetivoJ)):
+            return true 
          
     def caminhoLivre(self,matrix):
         if(matrix[self.posI][self.posJ+1]==0):
@@ -39,12 +35,6 @@ class Ant:
 
     
 
-    
-
-    
-
-
-    
 class Labrinth:
     
     PathMatrix=[]
@@ -109,15 +99,18 @@ class Labrinth:
     
 
 
+
 mapa = Labrinth("LabirintoExemplo01.txt")
+Colonia=[]
 
-for i in mapa.PathMatrix:
-    print(i)
+for i in range(50):
+    Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
 
-print ("\n")
+for k in Colonia:
+    k.caminhoLivre(mapa.PathMatrix)
+    while(not(k.PosDispo.empty() or k.find())):
 
-for i in mapa.FeromonMatrix:
-    print(i)
+        
 
 
             
