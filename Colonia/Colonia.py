@@ -41,6 +41,8 @@ class Labrinth:
     FeromonMatrix=[]
     pnt_init=[]
     pnt_end=[]
+    FeromRate=0.3
+    EvapoRate=0.09
     
     def __init__(self,file):
         f = open(file,'r') 
@@ -98,7 +100,26 @@ class Labrinth:
             self.PathMatrix[posI][posJ]=4
     
 
-
+    def AtualizaFerom(self,caminho):
+        for l in self.FeromonMatrix:
+            for j in line:
+                if (j > 0):
+                    j-=self.EvapoRate
+        
+        for pnt in caminho:
+            self.PathMatrix[caminho[1],caminho[0]]+=self.FeromRate
+                        
+            
+    def chose(self,FORMIGA):
+        cordenadas=[]
+        sum=0
+        for pnt in FORMIGA.PosDispo:
+            cordenadas.append(self.FeromonMatrix[pnt[1]][pnt[0]])
+            sum+=self.FeromonMatrix[pnt[1]][pnt[0]]
+        
+              
+        
+#Inicio do programa
 
 mapa = Labrinth("LabirintoExemplo01.txt")
 Colonia=[]
@@ -109,6 +130,7 @@ for i in range(50):
 for k in Colonia:
     k.caminhoLivre(mapa.PathMatrix)
     while(not(k.PosDispo.empty() or k.find())):
+        
 
         
 
