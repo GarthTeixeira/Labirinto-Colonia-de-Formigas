@@ -14,11 +14,13 @@ class Ant:
     def andar(self,proximo):
         self.posJ=proximo[0]
         self.posI=proximo[1]
-        self.Caminho.append([self.posJ,self.posI])   
+        self.Caminho.append([self.posJ,self.posI])
+        self.PosDispo.remove([self.posJ,self.posI])
+           
 
     def find(self):
-        if((self.PosI==self.ObjetivoI) and (self.PosJ==self.ObjetivoJ)):
-            return true 
+        if((self.posI == self.ObjetivoI) and (self.posJ == self.ObjetivoJ)):
+            return True 
          
     def caminhoLivre(self,matrix):
         if(matrix[self.posI][self.posJ+1]==0):
@@ -42,7 +44,7 @@ class Labrinth:
     pnt_init=[]
     pnt_end=[]
     FeromRate=0.3
-    EvapoRate=0.09
+    EvapoRate=0.4
     
     def __init__(self,file):
         f = open(file,'r') 
@@ -99,15 +101,19 @@ class Labrinth:
             posJ=caminho[0]
             self.PathMatrix[posI][posJ]=4
     
+    def CleanTrail(self,caminho):
+         for pnt in caminho:
+            self.PathMatrix[pnt[1]][pnt[0]]= 0 
 
     def AtualizaFerom(self,caminho):
         for l in self.FeromonMatrix:
-            for j in line:
-                if (j > 0):
-                    j-=self.EvapoRate
+            for j in range(len(l)):
+                if (l[j] > 0):
+                    l[j]=l[j]*(1-self.EvapoRate)
         
         for pnt in caminho:
-            self.PathMatrix[caminho[1],caminho[0]]+=self.FeromRate
+            self.FeromonMatrix[pnt[1]][pnt[0]]= self.FeromonMatrix[pnt[1]][pnt[0]]*(1.0+self.FeromRate)
+
                         
             
     def chose(self,FORMIGA):
@@ -127,10 +133,41 @@ Colonia=[]
 for i in range(50):
     Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
 
-for k in Colonia:
-    k.caminhoLivre(mapa.PathMatrix)
-    while(not(k.PosDispo.empty() or k.find())):
-        
+Colonia[0].caminhoLivre(mapa.PathMatrix)
+Colonia[0].andar([2,1])
+mapa.Atualizapath(Colonia[0].Caminho[-1])
+
+Colonia[0].caminhoLivre(mapa.PathMatrix)
+Colonia[0].andar([3,1])
+mapa.Atualizapath(Colonia[0].Caminho[-1])
+
+Colonia[0].caminhoLivre(mapa.PathMatrix)
+Colonia[0].andar([3,2])
+mapa.Atualizapath(Colonia[0].Caminho[-1])
+
+Colonia[0].caminhoLivre(mapa.PathMatrix)
+Colonia[0].andar([3,3])
+mapa.Atualizapath(Colonia[0].Caminho[-1])
+
+Colonia[0].caminhoLivre(mapa.PathMatrix)
+Colonia[0].andar([4,3])
+mapa.Atualizapath(Colonia[0].Caminho[-1])
+
+Colonia[0].caminhoLivre(mapa.PathMatrix)
+Colonia[0].andar([5,3])
+mapa.Atualizapath(Colonia[0].Caminho[-1])
+
+
+
+mapa.AtualizaFerom(Colonia[0].Caminho)
+
+mapa.CleanTrail(Colonia[0].Caminho)
+
+print("Fim")
+#for k in Colonia:
+    #k.caminhoLivre(mapa.PathMatrix)
+    #while(not(k.PosDispo.empty() or k.find())):
+
 
         
 
