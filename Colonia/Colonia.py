@@ -1,15 +1,16 @@
 import random
 
 class Ant:
-   
-    PosDispo=[]
-    Caminho=[]
+
 
     def __init__(self,origem,objetivo):
+        
         self.posJ=origem[0]
         self.posI=origem[1]
         self.ObjetivoJ=objetivo[0]
         self.ObjetivoI=objetivo[1]
+        self.PosDispo=[]
+        self.Caminho=[]
 
     def reeset(self,origem):
         self.posJ=origem[0]
@@ -85,16 +86,17 @@ class Ant:
 
 class Labrinth:
     
-    PathMatrix=[]
-    FeromonMatrix=[]
-    pnt_init=[]
-    pnt_end=[]
-    FeromRate=0.3
-    EvapoRate=0.4
+    FeromRate=0.5
+    EvapoRate=0.2
     
     def __init__(self,file):
         f = open(file,'r') 
         f_content = f.readlines()
+        self.PathMatrix=[]
+        self.FeromonMatrix=[]
+        self.pnt_init=[]
+        self.pnt_end=[]
+
         matrix1=[]
         matrix2=[]
         matrix3=[]
@@ -138,7 +140,7 @@ class Labrinth:
                 if(j==1):
                     matrix2.append(0)
                 else:
-                    matrix2.append(random.random()*100)
+                    matrix2.append(round(random.uniform(0,100),4))
             aux=matrix2.copy()
             self.FeromonMatrix.append(aux)
             matrix2.clear()
@@ -153,23 +155,24 @@ class Labrinth:
             if( self.PathMatrix[pnt[1]][pnt[0]] == 4 ):
                 self.PathMatrix[pnt[1]][pnt[0]] = 0 
 
-    def AtualizaFerom(self,Formiga):
-        for l in self.FeromonMatrix:
+    def EvaporaFerom(self):
+         for l in self.FeromonMatrix:
             for j in range(len(l)):
                 if (l[j] > 0):
                     l[j]=l[j]*(1-self.EvapoRate)
-        
+
+    def AtualizaFerom(self,Formiga):
+       
         for pnt in Formiga.Caminho:
-            self.FeromonMatrix[pnt[1]][pnt[0]]= self.FeromonMatrix[pnt[1]][pnt[0]]*(1.0+self.FeromRate)
+            self.FeromonMatrix[pnt[1]][pnt[0]]= round(self.FeromonMatrix[pnt[1]][pnt[0]]*(1.0+self.FeromRate),4)
 
     def print(self):
-        cont=0
-        print (" ")
-        for j in  range(len(self.PathMatrix)):
-            print(j,end=" ")
+        print("Labirinto:")
+        print("\n")
         for i in self.PathMatrix:
-            print(cont,end=" "),print(i)
-            cont +=1 
+            print(i)
+        print("\n")
+           
             
 
             
@@ -181,30 +184,31 @@ class Labrinth:
         
 #Inicio do programa
 
-mapa = Labrinth("LabirintoExemplo01.txt")
+mapa = Labrinth("M1.txt")
 Colonia=[]
-NC=30
+NC=10
+mapa.print()
 
-for i in range(10):
-    ant=Ant(mapa.pnt_init,mapa.pnt_end)
-    Colonia.append(ant)
-    del ant
-  
+for i in range(NC):
+    Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
 
-for m in range(len(Colonia)):
-    Colonia[i].caminhoLivre(mapa)
-    while(not Colonia[i].find()):
-        Colonia[i].choose(mapa)
-        mapa.Atualizapath(Colonia[i])
-        Colonia[i].caminhoLivre(mapa)
-        if (Colonia[i].fechado()):
-            mapa.CleanTrail(Colonia[i])
-            Colonia[i].reeset(mapa.pnt_init)
-            Colonia[i].caminhoLivre(mapa)
-    mapa.AtualizaFerom(Colonia[i])
-    mapa.CleanTrail(Colonia[i])
-    Colonia[i].reeset(mapa.pnt_init)
-    Colonia[i].caminhoLivre(mapa)
+for m in  Colonia:
+    m.caminhoLivre(mapa)
+    while(not m.find()):
+        m.choose(mapa)
+        mapa.Atualizapath(m)
+        m.caminhoLivre(mapa)
+        if (m.fechado()):
+            print("Bateu")
+            mapa.CleanTrail(m)
+            m.reeset(mapa.pnt_init)
+            m.caminhoLivre(mapa)
+    mapa.print()
+    mapa.EvaporaFerom()
+    mapa.AtualizaFerom(m)
+    #print("Caminho da Formiga "+str(Colonia.index(m)) + " : "),
+    #mapa.print()
+    mapa.CleanTrail(m)
 
 
 
