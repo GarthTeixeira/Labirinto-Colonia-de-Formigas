@@ -1,7 +1,9 @@
 import random
+import copy
 
 class Ant:
 
+   
 
     def __init__(self,origem,objetivo):
         
@@ -11,12 +13,27 @@ class Ant:
         self.ObjetivoI=objetivo[1]
         self.PosDispo=[]
         self.Caminho=[]
+        self.iteracao=0
+        self.no=[]
+
+    def come(self,mapa):
+        caminho=[]
+        last=[]
+
+        while(self.Caminho[-1] is not self.no ):
+            caminho.append(self.Caminho[-1])
+            last= self.Caminho.pop()
+            mapa.FeromonMatrix[last[1]][last[0]]=0
+        
+        
+       
 
     def reeset(self,origem):
         self.posJ=origem[0]
         self.posI=origem[1]
         self.PosDispo.clear()
         self.Caminho.clear()
+        self.no.clear()
         
     def andar(self,proximo):
         self.posJ=proximo[0]
@@ -28,11 +45,14 @@ class Ant:
     def find(self):
         if((self.posI == self.ObjetivoI) and (self.posJ == self.ObjetivoJ)):
             self.Caminho.append([self.posJ,self.posI])
+            
             return True 
         else:
             return False
          
     def caminhoLivre(self,matrix):
+
+       
         if(matrix.PathMatrix[self.posI][self.posJ+1]==0 or matrix.PathMatrix[self.posI][self.posJ+1]==3):
             self.PosDispo.append([self.posJ+1,self.posI])
 
@@ -44,6 +64,7 @@ class Ant:
 
         if(matrix.PathMatrix[self.posI-1][self.posJ]==0 or matrix.PathMatrix[self.posI-1][self.posJ]==3):
             self.PosDispo.append([self.posJ,self.posI-1])
+
             
         if( [self.ObjetivoJ,self.ObjetivoI] in self.PosDispo):
             self.PosDispo.clear()
@@ -53,32 +74,47 @@ class Ant:
 
     def fechado(self):
         if (len(self.PosDispo)==0 and (not self.find())):
+           
             return True
         else: 
+
             return False
                 
     def choose(self,mapa):
         if(not self.find()):
+            feromonios = []
+            sum=0
             if(len(self.PosDispo)==1):
                 self.andar(self.PosDispo[0])
-            else:
-                feromonios=[]
-                sum=0
+            elif(len(self.PosDispo)==2):
+                self.no=self.Caminho[-1]
                 for pnt in self.PosDispo:
                     feromonios.append(mapa.FeromonMatrix[pnt[1]][pnt[0]])
                     sum+=mapa.FeromonMatrix[pnt[1]][pnt[0]]
 
-                val=random.randint(0,int(sum))
-                intervalo1=int(feromonios[0])
-                intervalo2=int(feromonios[1]) + int(feromonios[0])
-                
-                if(val in range(1,intervalo1)):
+                val=random.randint(1,sum)
+                intervalo1=feromonios[0]
+                intervalo2=sum
+                if(val in range(1,intervalo1+1)):
                     self.andar(self.PosDispo[0])
-        
-                elif(val in range(intervalo1, intervalo2 + 1 ) ):
+                else:
+                    self.andar(self.PosDispo[1])
+            else:              
+                self.no=self.Caminho[-1]
+                for pnt in self.PosDispo:
+                    feromonios.append(mapa.FeromonMatrix[pnt[1]][pnt[0]])
+                    sum+=mapa.FeromonMatrix[pnt[1]][pnt[0]]
+
+                val=random.randint(1,sum)
+                intervalo1=feromonios[0]
+                intervalo2=feromonios[1]
+                if(val in range(1,intervalo1+1)):
+                    self.andar(self.PosDispo[0])
+                elif(val in range(intervalo1+1, intervalo2 + 1 ) ):
                     self.andar(self.PosDispo[1])
                 else:
-                    self.andar(self.PosDispo[-1])
+                     self.andar(self.PosDispo[2])
+                
 
 
 
@@ -96,6 +132,7 @@ class Labrinth:
         self.FeromonMatrix=[]
         self.pnt_init=[]
         self.pnt_end=[]
+
 
         matrix1=[]
         matrix2=[]
@@ -140,7 +177,7 @@ class Labrinth:
                 if(j==1):
                     matrix2.append(0)
                 else:
-                    matrix2.append(round(random.uniform(0,100),4))
+                    matrix2.append(100)
             aux=matrix2.copy()
             self.FeromonMatrix.append(aux)
             matrix2.clear()
@@ -158,13 +195,13 @@ class Labrinth:
     def EvaporaFerom(self):
          for l in self.FeromonMatrix:
             for j in range(len(l)):
-                if (l[j] > 0):
-                    l[j]=l[j]*(1-self.EvapoRate)
+                if (l[j] > 1):
+                    l[j]=int(l[j]*(1-self.EvapoRate))
 
     def AtualizaFerom(self,Formiga):
        
         for pnt in Formiga.Caminho:
-            self.FeromonMatrix[pnt[1]][pnt[0]]= round(self.FeromonMatrix[pnt[1]][pnt[0]]*(1.0+self.FeromRate),4)
+            self.FeromonMatrix[pnt[1]][pnt[0]]= int(self.FeromonMatrix[pnt[1]][pnt[0]]*(1.0+self.FeromRate))
 
     def print(self):
         print("Labirinto:")
@@ -187,7 +224,7 @@ class Labrinth:
 mapa = Labrinth("M1.txt")
 Colonia=[]
 NC=10
-mapa.print()
+
 
 for i in range(NC):
     Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
@@ -199,15 +236,26 @@ for m in  Colonia:
         mapa.Atualizapath(m)
         m.caminhoLivre(mapa)
         if (m.fechado()):
+            print("Caminho da Formiga "+str(Colonia.index(m)) + " : "),
             print("Bateu")
+            m.iteracao+=1
+            print("Posição:",end=" ")
+            print(m.Caminho[-1])
+            print("Interações:",end=" ")
+            print(m.iteracao)
+            m.come(mapa)
             mapa.CleanTrail(m)
             m.reeset(mapa.pnt_init)
             m.caminhoLivre(mapa)
+    
+    print("Caminho da Formiga "+str(Colonia.index(m)) + " : "),
+    print("Chegou")
+    m.iteracao+=1
+    print("Interações:",end=" ")
+    print(m.iteracao)
     mapa.print()
-    mapa.EvaporaFerom()
     mapa.AtualizaFerom(m)
-    #print("Caminho da Formiga "+str(Colonia.index(m)) + " : "),
-    #mapa.print()
+    mapa.EvaporaFerom()
     mapa.CleanTrail(m)
 
 
