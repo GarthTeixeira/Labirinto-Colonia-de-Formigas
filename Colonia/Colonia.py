@@ -17,6 +17,8 @@ class Ant:
         self.iteracao=0
         self.no=[]
 
+        self.Caminho.append([self.posJ,self.posI])
+
     def come(self,mapa):
         caminho=[]
         last=[]
@@ -33,6 +35,7 @@ class Ant:
         self.PosDispo.clear()
         self.Caminho.clear()
         self.no.clear()
+        self.Caminho.append([self.posJ,self.posI])
         
     def andar(self,proximo):
         self.posJ=proximo[0]
@@ -106,7 +109,7 @@ class Ant:
 
                 val=random.randint(1,sum)
                 intervalo1=feromonios[0]
-                intervalo2=feromonios[1]
+                intervalo2=feromonios[1]+feromonios[0]
                 if(val in range(1,intervalo1+1)):
                     self.andar(self.PosDispo[0])
                 elif(val in range(intervalo1+1, intervalo2 + 1 ) ):
@@ -242,7 +245,7 @@ def print_result(formiga,map,index):
         
 #Inicio do programa
 
-mapa = Labrinth("M1.txt")
+mapa = Labrinth("M2.txt")
 Colonia=[]
 NC=10
 
