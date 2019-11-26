@@ -1,9 +1,10 @@
 import random
 import copy
 
-class Ant:
 
-   
+#-------Funções da Formiga-------------------
+
+class Ant:
 
     def __init__(self,origem,objetivo):
         
@@ -25,8 +26,6 @@ class Ant:
             last= self.Caminho.pop()
             mapa.FeromonMatrix[last[1]][last[0]]=0
         
-        
-       
 
     def reeset(self,origem):
         self.posJ=origem[0]
@@ -114,11 +113,8 @@ class Ant:
                     self.andar(self.PosDispo[1])
                 else:
                      self.andar(self.PosDispo[2])
-                
 
-
-
-    
+#-------Funções do Labirinto-------------------
 
 class Labrinth:
     
@@ -209,7 +205,32 @@ class Labrinth:
         for i in self.PathMatrix:
             print(i)
         print("\n")
+        print("Matrix de Feromonio:")
+        print("\n")
+        for i in self.FeromonMatrix:
+            print(i)
+        print("\n")
+
+
+
+#-------Funções do Algoritmo-------------------
            
+def print_result(formiga,map,index):
+    if(formiga.find()):
+        print("Caminho da Formiga "+str(index) + " : "),
+        print("Chegou")
+        print("Interações:",end=" ")
+        print(formiga.iteracao)
+        map.print()
+        print("Caminho Resultado:",end=" ")
+        print(formiga.Caminho)
+    if(formiga.fechado()):
+        print("Caminho da Formiga "+str(index) + " : "),
+        print("Bateu")
+        print("Posição:",end=" ")
+        print(formiga.Caminho[-1])
+        print("Interações:",end=" ")
+        print(formiga.iteracao)
             
 
             
@@ -236,27 +257,20 @@ for m in  Colonia:
         mapa.Atualizapath(m)
         m.caminhoLivre(mapa)
         if (m.fechado()):
-            print("Caminho da Formiga "+str(Colonia.index(m)) + " : "),
-            print("Bateu")
             m.iteracao+=1
-            print("Posição:",end=" ")
-            print(m.Caminho[-1])
-            print("Interações:",end=" ")
-            print(m.iteracao)
+            print_result(m,mapa,Colonia.index(m))
             m.come(mapa)
             mapa.CleanTrail(m)
             m.reeset(mapa.pnt_init)
             m.caminhoLivre(mapa)
     
-    print("Caminho da Formiga "+str(Colonia.index(m)) + " : "),
-    print("Chegou")
     m.iteracao+=1
-    print("Interações:",end=" ")
-    print(m.iteracao)
-    mapa.print()
+    print_result(m,mapa,Colonia.index(m))
     mapa.AtualizaFerom(m)
     mapa.EvaporaFerom()
     mapa.CleanTrail(m)
+
+
 
 
 
