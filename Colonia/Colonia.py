@@ -1,10 +1,15 @@
 import random
 import copy
+import queue
+import pygame
 
+pygame.init()
 
 #-------Funções da Formiga-------------------
 
 class Ant:
+
+    Best=[]
 
     def __init__(self,origem,objetivo):
         
@@ -20,13 +25,9 @@ class Ant:
         self.Caminho.append([self.posJ,self.posI])
 
     def come(self,mapa):
-        caminho=[]
-        last=[]
-
+        
         while(self.Caminho[-1] is not self.no ):
-            caminho.append(self.Caminho[-1])
-            last= self.Caminho.pop()
-            mapa.FeromonMatrix[last[1]][last[0]]=0
+            self.Caminho.pop()
         
 
     def reeset(self,origem):
@@ -34,7 +35,7 @@ class Ant:
         self.posI=origem[1]
         self.PosDispo.clear()
         self.Caminho.clear()
-        self.no.clear()
+        self.no=[]
         self.Caminho.append([self.posJ,self.posI])
         
     def andar(self,proximo):
@@ -117,12 +118,14 @@ class Ant:
                 else:
                      self.andar(self.PosDispo[2])
 
+    
+
 #-------Funções do Labirinto-------------------
 
 class Labrinth:
     
-    FeromRate=0.5
-    EvapoRate=0.2
+    FeromRate=8
+    EvapoRate=2
     
     def __init__(self,file):
         f = open(file,'r') 
@@ -194,13 +197,17 @@ class Labrinth:
     def EvaporaFerom(self):
          for l in self.FeromonMatrix:
             for j in range(len(l)):
-                if (l[j] > 1):
-                    l[j]=int(l[j]*(1-self.EvapoRate))
+                if (l[j] > 100):
+                    l[j]=l[j]-self.EvapoRate
 
     def AtualizaFerom(self,Formiga):
        
         for pnt in Formiga.Caminho:
-            self.FeromonMatrix[pnt[1]][pnt[0]]= int(self.FeromonMatrix[pnt[1]][pnt[0]]*(1.0+self.FeromRate))
+            if( self.FeromonMatrix[pnt[1]][pnt[0]]<255):
+                self.FeromonMatrix[pnt[1]][pnt[0]]= self.FeromonMatrix[pnt[1]][pnt[0]] + self.FeromRate
+                if( self.FeromonMatrix[pnt[1]][pnt[0]]>255):
+                     self.FeromonMatrix[pnt[1]][pnt[0]]=255
+
 
     def print(self):
         print("Labirinto:")
@@ -226,7 +233,9 @@ def print_result(formiga,map,index):
         print(formiga.iteracao)
         map.print()
         print("Caminho Resultado:",end=" ")
-        print(formiga.Caminho)
+        for  i in range(10):
+            print(formiga.Caminho[i],end=" ")
+
     if(formiga.fechado()):
         print("Caminho da Formiga "+str(index) + " : "),
         print("Bateu")
@@ -237,7 +246,28 @@ def print_result(formiga,map,index):
             
 
             
+def PRINTA(formiga,m2,mferomonio):
+        
+    tela = pygame.display.set_mode((len(m2)*px,len(m2)*px))
 
+
+    for i in range(len(m2)):
+        for j in range(len(m2[0])):
+         
+            if m2[i][j] == 0:
+                pygame.draw.rect(tela, (0, 0, 0),[i*px,j*px,px,px])
+            elif m2[i][j] == 1:
+                pygame.draw.rect(tela, (255, 255, 255), [i * px, j * px, px, px])
+            elif m2[i][j] == 2:
+                pygame.draw.rect(tela, (0, 0, 255), [i * px, j * px, px, px])
+            else:
+                pygame.draw.rect(tela, (255, 0, 0), [i * px, j * px, px, px])
+            if(mferomonio[i][j]-100>0):
+                pygame.draw.rect(tela, (mferomonio[i][j]-100,0,0), [i*px,j*px,px,px])
+
+            pygame.draw.rect(tela, (0,255,0), [formiga.posI*px,formiga.posJ*px,px,px])
+   
+    pygame.display.update()
                         
     
         
@@ -245,95 +275,55 @@ def print_result(formiga,map,index):
         
 #Inicio do programa
 
-mapa = Labrinth("M2.txt")
+
+mapa = Labrinth("M1.txt")
+px = 5
+
 Colonia=[]
-NC=10
+CaminhosEcontrados=[]
+
+NC=30
+NF=10
 
 
-for i in range(NC):
+for i in range(NF):
     Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
 
-for m in  Colonia:
-    m.caminhoLivre(mapa)
-    while(not m.find()):
-        m.choose(mapa)
-        mapa.Atualizapath(m)
+for i in range(NC):
+
+    for m in  Colonia:
         m.caminhoLivre(mapa)
-        if (m.fechado()):
-            m.iteracao+=1
-            print_result(m,mapa,Colonia.index(m))
-            m.come(mapa)
-            mapa.CleanTrail(m)
-            m.reeset(mapa.pnt_init)
+        while(not m.find()):
+            m.choose(mapa)
+            PRINTA(m,mapa.PathMatrix,mapa.FeromonMatrix)
+            mapa.Atualizapath(m)
             m.caminhoLivre(mapa)
-    
-    m.iteracao+=1
-    print_result(m,mapa,Colonia.index(m))
-    mapa.AtualizaFerom(m)
-    mapa.EvaporaFerom()
-    mapa.CleanTrail(m)
-
-
-
-
-
-#for i in range(50):
-#        Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
-#
-#for m in range(NC):
-#    
-#        Colonia[i].caminhoLivre(mapa)
-#        while(not Colonia[i].find()):
-#            Colonia[i].choose(mapa)
-#            mapa.Atualizapath(Colonia[i])
-#            Colonia[i].caminhoLivre(mapa)
-#            if (Colonia[i].fechado()):
-#                Colonia[i].reeset()
-#                mapa.CleanTrail()
-#        if(Colonia[i].find()):
-#            mapa.AtualizaFerom(Colonia[i])
-#        mapa.CleanTrail(Colonia[i])
-
-    
-   
-
-#    Colonia[0].caminhoLivre(mapa)
-#    Colonia[0].choose(mapa)
-#    mapa.Atualizapath(Colonia[0])
-#
-#    Colonia[0].caminhoLivre(mapa)
-#    Colonia[0].choose(mapa)
-#    mapa.Atualizapath(Colonia[0])
-#
-#    Colonia[0].caminhoLivre(mapa)
-#    Colonia[0].choose(mapa)
-#    mapa.Atualizapath(Colonia[0])
-#
-#    Colonia[0].caminhoLivre(mapa)
-#    Colonia[0].choose(mapa)
-#    mapa.Atualizapath(Colonia[0])
-#
-#    Colonia[0].caminhoLivre(mapa)
-#    Colonia[0].choose(mapa)
-#    mapa.Atualizapath(Colonia[0])
-#
-#    Colonia[0].caminhoLivre(mapa)
-#    Colonia[0].choose(mapa)
-#    mapa.Atualizapath(Colonia[0])
-#
-#
-#
-#    mapa.AtualizaFerom(Colonia[0])
-#
-#    mapa.CleanTrail(Colonia[0])
-#
-#print("Fim")
-#for k in Colonia:
-    #k.caminhoLivre(mapa.PathMatrix)
-    #while(not(k.PosDispo.empty() or k.find())):
-
-
+            if (m.fechado()):
+                m.iteracao+=1
+                print_result(m,mapa,Colonia.index(m))
+                m.come(mapa)
+                mapa.CleanTrail(m)
+                m.reeset(mapa.pnt_init)
+                m.caminhoLivre(mapa)
+               
         
+        m.iteracao+=1
+        print_result(m,mapa,Colonia.index(m))
+        if(len(m.Caminho)<len(m.Best) or len(Ant.Best)==0):
+            Ant.Best=m.Caminho.copy()
+            CaminhosEcontrados.append(m.Caminho.copy())
+               
+        if(len(m.Caminho) != len(CaminhosEcontrados[-1]) ):
+            CaminhosEcontrados.append(m.Caminho.copy())
+
+        mapa.EvaporaFerom()
+        mapa.AtualizaFerom(m)
+        mapa.CleanTrail(m)
+        m.reeset(mapa.pnt_init)
+print(Ant.Best)
+
+
+
 
 
             
