@@ -7,8 +7,8 @@ pygame.init() #InniciaPygame
 
 
 NC=30       #Número de Cíclos
-NF=15       #Número de Formigas 
-px = 10      #Tamanho do pixel
+NF=5       #Número de Formigas 
+px = 3      #Tamanho do pixel
 
 FeromInit=125 #Valor inicial de feromônio
 FeromMin=50  #Valor minimo de ferômonio
@@ -304,7 +304,7 @@ def PRINTA(formiga,m2,mferomonio):
 #Inicio do programa
 
 
-mapa = Labrinth("LabirintoExemplo01.txt")
+mapa = Labrinth("M2.txt")
 
 Colonia=[]
 CaminhosEcontrados=[]
