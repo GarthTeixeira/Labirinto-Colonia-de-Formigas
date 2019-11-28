@@ -3,13 +3,25 @@ import copy
 import queue
 import pygame
 
-pygame.init()
+pygame.init() #InniciaPygame
+
+
+NC=30       #Número de Cíclos
+NF=15       #Número de Formigas 
+px = 10      #Tamanho do pixel
+
+FeromInit=125 #Valor inicial de feromônio
+FeromMin=50  #Valor minimo de ferômonio
+FeromMax=300  #Valor maximo de feromônio
+FeromRate=9   #Taxa de feromônio
+EvapoRate=4   #Taxa de evaporação
+Plus = 2      #Bonificação para caminhos menores
 
 #-------Funções da Formiga-------------------
 
 class Ant:
 
-    Best=[]
+    
 
     def __init__(self,origem,objetivo):
         
@@ -24,12 +36,15 @@ class Ant:
 
         self.Caminho.append([self.posJ,self.posI])
 
-    def come(self,mapa):
-        
-        while(self.Caminho[-1] is not self.no ):
+    def come(self):
+        while(self.Caminho[-1] is not self.no[-1] ):
             self.Caminho.pop()
+        self.posJ=self.Caminho[-1][0]
+        self.posI=self.Caminho[-1][1]
+        if(self.fechado):
+            self.no.pop()
         
-
+       
     def reeset(self,origem):
         self.posJ=origem[0]
         self.posI=origem[1]
@@ -47,14 +62,11 @@ class Ant:
 
     def find(self):
         if((self.posI == self.ObjetivoI) and (self.posJ == self.ObjetivoJ)):
-            self.Caminho.append([self.posJ,self.posI])
-            
             return True 
         else:
             return False
          
     def caminhoLivre(self,matrix):
-
        
         if(matrix.PathMatrix[self.posI][self.posJ+1]==0 or matrix.PathMatrix[self.posI][self.posJ+1]==3):
             self.PosDispo.append([self.posJ+1,self.posI])
@@ -67,30 +79,30 @@ class Ant:
 
         if(matrix.PathMatrix[self.posI-1][self.posJ]==0 or matrix.PathMatrix[self.posI-1][self.posJ]==3):
             self.PosDispo.append([self.posJ,self.posI-1])
-
             
         if( [self.ObjetivoJ,self.ObjetivoI] in self.PosDispo):
             self.PosDispo.clear()
             self.posI=self.ObjetivoI
             self.posJ=self.ObjetivoJ
+            self.Caminho.append([self.posJ,self.posI])
             return
 
     def fechado(self):
         if (len(self.PosDispo)==0 and (not self.find())):
-           
             return True
         else: 
-
             return False
                 
     def choose(self,mapa):
         if(not self.find()):
             feromonios = []
             sum=0
+
             if(len(self.PosDispo)==1):
                 self.andar(self.PosDispo[0])
+
             elif(len(self.PosDispo)==2):
-                self.no=self.Caminho[-1]
+                self.no.append(self.Caminho[-1])
                 for pnt in self.PosDispo:
                     feromonios.append(mapa.FeromonMatrix[pnt[1]][pnt[0]])
                     sum+=mapa.FeromonMatrix[pnt[1]][pnt[0]]
@@ -103,7 +115,8 @@ class Ant:
                 else:
                     self.andar(self.PosDispo[1])
             else:              
-                self.no=self.Caminho[-1]
+                self.no.append(self.Caminho[-1])
+
                 for pnt in self.PosDispo:
                     feromonios.append(mapa.FeromonMatrix[pnt[1]][pnt[0]])
                     sum+=mapa.FeromonMatrix[pnt[1]][pnt[0]]
@@ -111,6 +124,7 @@ class Ant:
                 val=random.randint(1,sum)
                 intervalo1=feromonios[0]
                 intervalo2=feromonios[1]+feromonios[0]
+
                 if(val in range(1,intervalo1+1)):
                     self.andar(self.PosDispo[0])
                 elif(val in range(intervalo1+1, intervalo2 + 1 ) ):
@@ -124,8 +138,7 @@ class Ant:
 
 class Labrinth:
     
-    FeromRate=8
-    EvapoRate=2
+    
     
     def __init__(self,file):
         f = open(file,'r') 
@@ -134,7 +147,6 @@ class Labrinth:
         self.FeromonMatrix=[]
         self.pnt_init=[]
         self.pnt_end=[]
-
 
         matrix1=[]
         matrix2=[]
@@ -166,7 +178,6 @@ class Labrinth:
         
         self.PathMatrix=matrix3.copy()
         matrix3.clear()
-
          
         for i in self.PathMatrix:
             if (2 in i):
@@ -179,7 +190,8 @@ class Labrinth:
                 if(j==1):
                     matrix2.append(0)
                 else:
-                    matrix2.append(100)
+                    matrix2.append(FeromInit)
+
             aux=matrix2.copy()
             self.FeromonMatrix.append(aux)
             matrix2.clear()
@@ -197,16 +209,18 @@ class Labrinth:
     def EvaporaFerom(self):
          for l in self.FeromonMatrix:
             for j in range(len(l)):
-                if (l[j] > 100):
-                    l[j]=l[j]-self.EvapoRate
+                if (l[j] > FeromMin):
+                    l[j]=l[j]-EvapoRate
+                    if(l[j]<FeromMin):
+                        l[j]=FeromMin
 
-    def AtualizaFerom(self,Formiga):
+    def AtualizaFerom(self,Formiga,plus):
        
         for pnt in Formiga.Caminho:
-            if( self.FeromonMatrix[pnt[1]][pnt[0]]<255):
-                self.FeromonMatrix[pnt[1]][pnt[0]]= self.FeromonMatrix[pnt[1]][pnt[0]] + self.FeromRate
-                if( self.FeromonMatrix[pnt[1]][pnt[0]]>255):
-                     self.FeromonMatrix[pnt[1]][pnt[0]]=255
+            if( self.FeromonMatrix[pnt[1]][pnt[0]]<FeromMax):
+                self.FeromonMatrix[pnt[1]][pnt[0]]= self.FeromonMatrix[pnt[1]][pnt[0]] + FeromRate + plus
+                if( self.FeromonMatrix[pnt[1]][pnt[0]]>FeromMax):
+                    self.FeromonMatrix[pnt[1]][pnt[0]]=FeromMax
 
 
     def print(self):
@@ -253,19 +267,33 @@ def PRINTA(formiga,m2,mferomonio):
 
     for i in range(len(m2)):
         for j in range(len(m2[0])):
+
+            a=255/(FeromMax-FeromMin)
+            b=FeromMin
+            x=mferomonio[i][j]
+            y=int(a*x-b)
+
+
          
             if m2[i][j] == 0:
-                pygame.draw.rect(tela, (0, 0, 0),[i*px,j*px,px,px])
+                pygame.draw.rect(tela, (0, 0, 0),[j*px,i*px,px,px])
             elif m2[i][j] == 1:
-                pygame.draw.rect(tela, (255, 255, 255), [i * px, j * px, px, px])
-            elif m2[i][j] == 2:
-                pygame.draw.rect(tela, (0, 0, 255), [i * px, j * px, px, px])
-            else:
-                pygame.draw.rect(tela, (255, 0, 0), [i * px, j * px, px, px])
-            if(mferomonio[i][j]-100>0):
-                pygame.draw.rect(tela, (mferomonio[i][j]-100,0,0), [i*px,j*px,px,px])
+                pygame.draw.rect(tela, (255, 255, 255), [j*px,i*px, px, px])
+            
+            if(mferomonio[i][j]>0):
+                pygame.draw.rect(tela, (y,0,0), [j*px,i*px,px,px])
+            
+            if m2[i][j] == 4:
+                pygame.draw.rect(tela, (202, 205, 0), [j*px,i*px, px, px])
 
-            pygame.draw.rect(tela, (0,255,0), [formiga.posI*px,formiga.posJ*px,px,px])
+           
+            
+            
+            
+            if m2[i][j] == 2:
+                pygame.draw.rect(tela, (0, 0, 255), [j*px,i*px, px, px])
+            pygame.draw.rect(tela, (247,45,221), [formiga.ObjetivoJ*px,formiga.ObjetivoI*px,px,px])
+            pygame.draw.rect(tela, (0,255,0), [formiga.posJ*px,formiga.posI*px,px,px])
    
     pygame.display.update()
                         
@@ -276,20 +304,16 @@ def PRINTA(formiga,m2,mferomonio):
 #Inicio do programa
 
 
-mapa = Labrinth("M1.txt")
-px = 5
+mapa = Labrinth("LabirintoExemplo01.txt")
 
 Colonia=[]
 CaminhosEcontrados=[]
-
-NC=30
-NF=10
-
 
 for i in range(NF):
     Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
 
 for i in range(NC):
+    Best = 0
 
     for m in  Colonia:
         m.caminhoLivre(mapa)
@@ -298,29 +322,31 @@ for i in range(NC):
             PRINTA(m,mapa.PathMatrix,mapa.FeromonMatrix)
             mapa.Atualizapath(m)
             m.caminhoLivre(mapa)
-            if (m.fechado()):
-                m.iteracao+=1
+          
+            while (m.fechado()):
                 print_result(m,mapa,Colonia.index(m))
-                m.come(mapa)
-                mapa.CleanTrail(m)
-                m.reeset(mapa.pnt_init)
+                m.come()
                 m.caminhoLivre(mapa)
-               
         
+        mapa.CleanTrail(m)
         m.iteracao+=1
         print_result(m,mapa,Colonia.index(m))
-        if(len(m.Caminho)<len(m.Best) or len(Ant.Best)==0):
-            Ant.Best=m.Caminho.copy()
-            CaminhosEcontrados.append(m.Caminho.copy())
-               
-        if(len(m.Caminho) != len(CaminhosEcontrados[-1]) ):
-            CaminhosEcontrados.append(m.Caminho.copy())
+        
+    for m in Colonia:
 
+        CaminhosEcontrados.append(m.Caminho.copy())
+
+        if(len(m.Caminho)>Best):
+            mapa.AtualizaFerom(m,0)
+        else:
+            Best=len(m.Caminho)
+            mapa.AtualizaFerom(m,Plus)
+        
         mapa.EvaporaFerom()
-        mapa.AtualizaFerom(m)
-        mapa.CleanTrail(m)
         m.reeset(mapa.pnt_init)
-print(Ant.Best)
+    
+
+
 
 
 
