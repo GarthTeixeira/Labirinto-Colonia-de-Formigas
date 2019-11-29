@@ -9,7 +9,9 @@ pygame.init()  # InniciaPygame
 
 NC = 30  # Número de Cíclos
 NF = 5  # Número de Formigas
-px = 5  # Tamanho do pixel
+px = 2  # Tamanho do pixel
+
+lab = "M3.txt"
 
 FeromInit = 125  # Valor inicial de feromônio
 FeromMin = 50  # Valor minimo de ferômonio
@@ -253,12 +255,12 @@ def print_result(formiga, map, index):
 
 def printaBest(formiga, m2, mferomonio):
     tela = pygame.display.set_mode((len(m2) * px, len(m2) * px))
+    a = 255 / (FeromMax - FeromMin)
+    b = FeromMin
+
 
     for i in range(len(m2)):
         for j in range(len(m2[0])):
-
-            a = 255 / (FeromMax - FeromMin)
-            b = FeromMin
             x = mferomonio[i][j]
             y = int(a * x - b)
 
@@ -266,27 +268,27 @@ def printaBest(formiga, m2, mferomonio):
                 pygame.draw.rect(tela, (0, 0, 0), [j * px, i * px, px, px])
             elif m2[i][j] == 1:
                 pygame.draw.rect(tela, (255, 255, 255), [j * px, i * px, px, px])
-
+            elif m2[i][j] == 2:
+                pygame.draw.rect(tela, (0, 0, 255), [j * px, i * px, px, px])
             if mferomonio[i][j] > 0:
                 pygame.draw.rect(tela, (y, 0, 0), [j * px, i * px, px, px])
-
             if m2[i][j] == 4:
                 pygame.draw.rect(tela, (202, 205, 0), [j * px, i * px, px, px])
 
-            if m2[i][j] == 2:
-                pygame.draw.rect(tela, (0, 0, 255), [j * px, i * px, px, px])
 
 
+    pygame.draw.rect(tela, (255, 255, 0), [formiga.ObjetivoJ * px, formiga.ObjetivoI * px, px, px])
+    #pygame.draw.rect(tela, (0, 255, 0), [formiga.posJ * px, formiga.posI * px, px, px])
     pygame.display.update()
 
 def PRINTA(formiga, m2, mferomonio):
     tela = pygame.display.set_mode((len(m2) * px, len(m2) * px))
+    a = 255 / (FeromMax - FeromMin)
+    b = FeromMin
+
 
     for i in range(len(m2)):
         for j in range(len(m2[0])):
-
-            a = 255 / (FeromMax - FeromMin)
-            b = FeromMin
             x = mferomonio[i][j]
             y = int(a * x - b)
 
@@ -294,25 +296,24 @@ def PRINTA(formiga, m2, mferomonio):
                 pygame.draw.rect(tela, (0, 0, 0), [j * px, i * px, px, px])
             elif m2[i][j] == 1:
                 pygame.draw.rect(tela, (255, 255, 255), [j * px, i * px, px, px])
-
-            if (mferomonio[i][j] > 0):
+            elif m2[i][j] == 2:
+                pygame.draw.rect(tela, (0, 0, 255), [j * px, i * px, px, px])
+            if mferomonio[i][j] > 0:
                 pygame.draw.rect(tela, (y, 0, 0), [j * px, i * px, px, px])
-
             if m2[i][j] == 4:
                 pygame.draw.rect(tela, (202, 205, 0), [j * px, i * px, px, px])
 
-            if m2[i][j] == 2:
-                pygame.draw.rect(tela, (0, 0, 255), [j * px, i * px, px, px])
-            pygame.draw.rect(tela, (247, 45, 221), [formiga.ObjetivoJ * px, formiga.ObjetivoI * px, px, px])
-            pygame.draw.rect(tela, (0, 255, 0), [formiga.posJ * px, formiga.posI * px, px, px])
 
+
+    pygame.draw.rect(tela, (255, 255, 0), [formiga.ObjetivoJ * px, formiga.ObjetivoI * px, px, px])
+    #pygame.draw.rect(tela, (0, 255, 0), [formiga.posJ * px, formiga.posI * px, px, px])
     pygame.display.update()
 
 
 # Inicio do programa
 
 
-mapa = Labrinth("M1.txt")
+mapa = Labrinth(lab)
 
 Colonia = []
 CaminhosEcontrados = []
@@ -328,13 +329,13 @@ for i in range(NC):
     for m in Colonia:
         m.caminhoLivre(mapa)
         while (not m.find()):
-            #Habilitado 
+            #Habilitado botão de fechar
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
+
             m.choose(mapa)
             #PRINTA(m, mapa.PathMatrix, mapa.FeromonMatrix)
-            printaBest(m, mapa.PathMatrix, mapa.FeromonMatrix)
             mapa.Atualizapath(m)
             m.caminhoLivre(mapa)
 
@@ -345,6 +346,7 @@ for i in range(NC):
 
         mapa.CleanTrail(m)
         m.iteracao += 1
+        printaBest(m, mapa.PathMatrix, mapa.FeromonMatrix)
         print_result(m, mapa, Colonia.index(m))
 
     for m in Colonia:
