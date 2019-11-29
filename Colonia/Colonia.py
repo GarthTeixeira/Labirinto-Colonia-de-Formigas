@@ -1,14 +1,15 @@
 import random
 import copy
 import queue
-import pygame
+#import pygame
+from timeit import default_timer as timer
 
-pygame.init() #InniciaPygame
+#pygame.init() #InniciaPygame
 
 
 NC=30       #Número de Cíclos
-NF=15       #Número de Formigas 
-px = 10      #Tamanho do pixel
+NF=3       #Número de Formigas 
+px = 1      #Tamanho do pixel
 
 FeromInit=125 #Valor inicial de feromônio
 FeromMin=50  #Valor minimo de ferômonio
@@ -223,17 +224,12 @@ class Labrinth:
                     self.FeromonMatrix[pnt[1]][pnt[0]]=FeromMax
 
 
-    def print(self):
-        print("Labirinto:")
-        print("\n")
-        for i in self.PathMatrix:
-            print(i)
-        print("\n")
-        print("Matrix de Feromonio:")
-        print("\n")
+    def print(self,file):
+        file.write("Matrix de Feromonio:")
+        file.write("\n")
         for i in self.FeromonMatrix:
-            print(i)
-        print("\n")
+            file.write(str(i))
+        file.write("\n")
 
 
 
@@ -241,22 +237,23 @@ class Labrinth:
            
 def print_result(formiga,map,index):
     if(formiga.find()):
-        print("Caminho da Formiga "+str(index) + " : "),
+        print("Formiga "+str(index) + " : "),
         print("Chegou")
         print("Interações:",end=" ")
         print(formiga.iteracao)
-        map.print()
-        print("Caminho Resultado:",end=" ")
-        for  i in range(10):
-            print(formiga.Caminho[i],end=" ")
+        print("Tamanho do caminho Resultado:")
+        print(len(formiga.Caminho),end='\r')
+        
 
     if(formiga.fechado()):
-        print("Caminho da Formiga "+str(index) + " : "),
+        print("Formiga "+str(index) + " : "),
         print("Bateu")
         print("Posição:",end=" ")
         print(formiga.Caminho[-1])
         print("Interações:",end=" ")
         print(formiga.iteracao)
+        print("Tamanho do caminho :",end=" ")
+        print(len(formiga.Caminho))
             
 
             
@@ -304,7 +301,9 @@ def PRINTA(formiga,m2,mferomonio):
 #Inicio do programa
 
 
-mapa = Labrinth("LabirintoExemplo01.txt")
+mapa = Labrinth("M1.txt")
+
+file = open("Dados.txt",'w')
 
 Colonia=[]
 CaminhosEcontrados=[]
@@ -313,37 +312,49 @@ for i in range(NF):
     Colonia.append(Ant(mapa.pnt_init,mapa.pnt_end))
 
 for i in range(NC):
+    
     Best = 0
+    start = timer()
 
     for m in  Colonia:
         m.caminhoLivre(mapa)
         while(not m.find()):
             m.choose(mapa)
-            PRINTA(m,mapa.PathMatrix,mapa.FeromonMatrix)
+            m.iteracao+=1
             mapa.Atualizapath(m)
             m.caminhoLivre(mapa)
           
             while (m.fechado()):
-                print_result(m,mapa,Colonia.index(m))
+                #print_result(m,mapa,Colonia.index(m))
                 m.come()
                 m.caminhoLivre(mapa)
         
+       # print_result(m,mapa,Colonia.index(m))
         mapa.CleanTrail(m)
-        m.iteracao+=1
-        print_result(m,mapa,Colonia.index(m))
+        #print_result(m,mapa,Colonia.index(m))
         
     for m in Colonia:
-
-        CaminhosEcontrados.append(m.Caminho.copy())
 
         if(len(m.Caminho)>Best):
             mapa.AtualizaFerom(m,0)
         else:
             Best=len(m.Caminho)
             mapa.AtualizaFerom(m,Plus)
-        
         mapa.EvaporaFerom()
+        CaminhosEcontrados.append(mapa.FeromonMatrix.copy())
         m.reeset(mapa.pnt_init)
+        m.iteracao=0
+    
+    end = timer()
+    tempo = end-start
+    file.write("Matriz do  Ciclo:"+str(i+1))
+    mapa.print(file)
+    file.write("Tempo:"+str(tempo))
+    file.write("\n")
+   # PRINTA(m,mapa.PathMatrix,mapa.FeromonMatrix)    
+        
+file.close()
+
     
 
 
