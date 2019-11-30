@@ -1,23 +1,46 @@
+import os
 import random
-import copy
-import queue
 import sys
-
+import time
 import pygame
-
+#py colonia.py LABIRINTO.txt PIXELS CICLOS FORMIGAS VERSÃO TAXAEVAPORAÇÃO TAXAFEROMONIO
 pygame.init()  # InniciaPygame
 
-NC = 30  # Número de Cíclos
-NF = 5  # Número de Formigas
-px = 2  # Tamanho do pixel
+inicial = millis = int(round(time.time() * 1000))
 
-lab = "M3.txt"
+if len(sys.argv) > 3:
+    NC = int(sys.argv[3])  # Número de Cíclos
+else:
+    NC = 10
+if len(sys.argv) > 4:
+    NF = int(sys.argv[4])   # Número de Formigas
+else:
+    NF = 5
+if len(sys.argv) > 2:
+    px = int(sys.argv[2])   # Tamanho do pixel
+else:
+    px = 1
+if len(sys.argv) > 5:
+    ver = sys.argv[5]
+else:
+    ver = "-v1"
+if len(sys.argv) > 1:
+    lab = sys.argv[1]
+else:
+    lab = "m1.txt"
 
-FeromInit = 125  # Valor inicial de feromônio
-FeromMin = 50  # Valor minimo de ferômonio
+FeromInit = 50  # Valor inicial de feromônio
+FeromMin = 1  # Valor minimo de ferômonio
 FeromMax = 300  # Valor maximo de feromônio
-FeromRate = 9  # Taxa de feromônio
-EvapoRate = 4  # Taxa de evaporação
+
+if len(sys.argv) > 7:
+    FeromRate = sys.argv[7]
+else:
+    FeromRate = 10  # Taxa de feromônio
+if len(sys.argv) > 6:
+    EvapoRate = sys.argv[6]
+else:
+    EvapoRate = 3  # Taxa de evaporação
 Plus = 2  # Bonificação para caminhos menores
 
 
@@ -230,6 +253,11 @@ class Labrinth:
             print(i)
         print("\n")
 
+    def limpaBeco(self):
+        for i in range(len(self.PathMatrix)):
+            for j in range(len(self.PathMatrix[0])):
+                if(self.PathMatrix[j][i] == 4):
+                    self.PathMatrix[j][i] = 0
 
 # -------Funções do Algoritmo-------------------
 
@@ -256,17 +284,13 @@ def print_result(formiga, map, index):
 def printaBest(formiga, m2, mferomonio):
     tela = pygame.display.set_mode((len(m2) * px, len(m2) * px))
     a = 255 / (FeromMax - FeromMin)
-    b = FeromMin
-
 
     for i in range(len(m2)):
         for j in range(len(m2[0])):
             x = mferomonio[i][j]
-            y = int(a * x - b)
+            y = int(a * x - FeromMin)
 
-            if m2[i][j] == 0:
-                pygame.draw.rect(tela, (0, 0, 0), [j * px, i * px, px, px])
-            elif m2[i][j] == 1:
+            if m2[i][j] == 1:
                 pygame.draw.rect(tela, (255, 255, 255), [j * px, i * px, px, px])
             elif m2[i][j] == 2:
                 pygame.draw.rect(tela, (0, 0, 255), [j * px, i * px, px, px])
@@ -284,17 +308,13 @@ def printaBest(formiga, m2, mferomonio):
 def PRINTA(formiga, m2, mferomonio):
     tela = pygame.display.set_mode((len(m2) * px, len(m2) * px))
     a = 255 / (FeromMax - FeromMin)
-    b = FeromMin
-
 
     for i in range(len(m2)):
         for j in range(len(m2[0])):
             x = mferomonio[i][j]
-            y = int(a * x - b)
+            y = int(a * x - FeromMin)
 
-            if m2[i][j] == 0:
-                pygame.draw.rect(tela, (0, 0, 0), [j * px, i * px, px, px])
-            elif m2[i][j] == 1:
+            if m2[i][j] == 1:
                 pygame.draw.rect(tela, (255, 255, 255), [j * px, i * px, px, px])
             elif m2[i][j] == 2:
                 pygame.draw.rect(tela, (0, 0, 255), [j * px, i * px, px, px])
@@ -303,15 +323,26 @@ def PRINTA(formiga, m2, mferomonio):
             if m2[i][j] == 4:
                 pygame.draw.rect(tela, (202, 205, 0), [j * px, i * px, px, px])
 
-
-
     pygame.draw.rect(tela, (255, 255, 0), [formiga.ObjetivoJ * px, formiga.ObjetivoI * px, px, px])
-    #pygame.draw.rect(tela, (0, 255, 0), [formiga.posJ * px, formiga.posI * px, px, px])
+    pygame.draw.rect(tela, (0, 255, 0), [formiga.posJ * px, formiga.posI * px, px, px])
     pygame.display.update()
 
 
-# Inicio do programa
+def pheromoneMax(mferomonio):
+    max = 0
+    for i in range(len(mferomonio)):
+        for j in range(len(mferomonio[0])):
+            if mferomonio[i][j] > max:
+                max = mferomonio[j][i]
 
+    return max
+
+def meanPaths(caminhos):
+    tamanho = 0
+    for a in caminhos:
+        tamanho+=len(a)
+    return (tamanho/len(caminhos))
+# Inicio do programa
 
 mapa = Labrinth(lab)
 
@@ -322,12 +353,16 @@ saida = False
 
 for i in range(NF):
     Colonia.append(Ant(mapa.pnt_init, mapa.pnt_end))
-
+ciclos = 0
+tempo = 0
+tamanho = 0
+feromax = 0
 for i in range(NC):
     Best = 0
-
+    inicial = (time.time() * 1000)
     for m in Colonia:
         m.caminhoLivre(mapa)
+
         while (not m.find()):
             #Habilitado botão de fechar
             for event in pygame.event.get():
@@ -335,33 +370,53 @@ for i in range(NC):
                     sys.exit()
 
             m.choose(mapa)
-            #PRINTA(m, mapa.PathMatrix, mapa.FeromonMatrix)
+            if ver == "-v2":
+                PRINTA(m, mapa.PathMatrix, mapa.FeromonMatrix)
             mapa.Atualizapath(m)
             m.caminhoLivre(mapa)
 
             while (m.fechado()):
-                print_result(m, mapa, Colonia.index(m))
+                #print_result(m, mapa, Colonia.index(m))
                 m.come()
                 m.caminhoLivre(mapa)
 
-        mapa.CleanTrail(m)
+        mapa.limpaBeco()
         m.iteracao += 1
-        printaBest(m, mapa.PathMatrix, mapa.FeromonMatrix)
-        print_result(m, mapa, Colonia.index(m))
+        if ver == "-v1":
+            printaBest(m, mapa.PathMatrix, mapa.FeromonMatrix)
+
+        #print_result(m, mapa, Colonia.index(m))
 
     for m in Colonia:
 
         CaminhosEcontrados.append(m.Caminho.copy())
 
-        if (len(m.Caminho) > Best):
-            mapa.AtualizaFerom(m, 0)
-        else:
+        if (len(m.Caminho) <= Best):
             Best = len(m.Caminho)
             mapa.AtualizaFerom(m, Plus)
-
+        else:
+            mapa.AtualizaFerom(m, 0)
         mapa.EvaporaFerom()
         m.reeset(mapa.pnt_init)
 
+    encontrou = (time.time() * 1000)
+
+    tempo += (encontrou - inicial)
+    tamanho += meanPaths(CaminhosEcontrados)
+    feromax += pheromoneMax(mapa.FeromonMatrix)
+    ciclos += 1
+sair = True
+
+print("APERTE O X DA JANELA PARA SAIR!!!")
+while sair:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sair = False
+
+print("Ciclos: "+ str(ciclos))
+print("Tempo médio: "+ str(format((tempo/ciclos), '.4f')) + " ms")
+print("Tamanho médio: "+ str(tamanho/ciclos))
+print("Feromonio Max :"+ str(feromax/ciclos))
 
 
 
