@@ -22,7 +22,6 @@ Plus = 2      #Bonificação para caminhos menores
 class Ant:
 
     
-
     def __init__(self,origem,objetivo):
         
         self.posJ=origem[0]
@@ -104,8 +103,8 @@ class Ant:
             elif(len(self.PosDispo)==2):
                 self.no.append(self.Caminho[-1])
                 for pnt in self.PosDispo:
-                    feromonios.append(mapa.FeromonMatrix[pnt[1]][pnt[0]])
-                    sum+=mapa.FeromonMatrix[pnt[1]][pnt[0]]
+                    feromonios.append(mapa.PheromonMatrix[pnt[1]][pnt[0]])
+                    sum+=mapa.PheromonMatrix[pnt[1]][pnt[0]]
 
                 val=random.randint(1,sum)
                 intervalo1=feromonios[0]
@@ -118,8 +117,8 @@ class Ant:
                 self.no.append(self.Caminho[-1])
 
                 for pnt in self.PosDispo:
-                    feromonios.append(mapa.FeromonMatrix[pnt[1]][pnt[0]])
-                    sum+=mapa.FeromonMatrix[pnt[1]][pnt[0]]
+                    feromonios.append(mapa.PheromonMatrix[pnt[1]][pnt[0]])
+                    sum+=mapa.PheromonMatrix[pnt[1]][pnt[0]]
 
                 val=random.randint(1,sum)
                 intervalo1=feromonios[0]
@@ -138,46 +137,47 @@ class Ant:
 
 class Labrinth:
     
-    
-    
-    def __init__(self,file):
-        f = open(file,'r') 
-        f_content = f.readlines()
-        self.PathMatrix=[]
-        self.FeromonMatrix=[]
-        self.pnt_init=[]
-        self.pnt_end=[]
-
-        matrix1=[]
-        matrix2=[]
-        matrix3=[]
+    def __init__(self,file):            # The function trates the Maze, transforming the character maze into a numbermaze
+        f = open(file,'r')              # easier to use the Ants, here the function reads the file.
+        f_content = f.readlines()       #
+        self.PathMatrix=[]              # It's created the Path matrix variable where the Ants can walk on it, with the
+                                        # following num interpretations:
+                                        # 1-Wall     2-Initial Point      3-End Point    4-Paths Traveled
+        self.PheromonMatrix=[]          # Its created the Pheromon Matrix where has the same size of the Path Matrix,
+                                        # however the positions are fild with pheromons values,where there walls, the pheromon
+                                        # value is 0.
+        self.pnt_init=[]                # The initial point coordenates is stored into pnt_init vector as for the ending point into
+        self.pnt_end=[]                 # pnt_end vector, the 0 index is the vertical cordenates (line number) and 1 index is stored
+                                        # the horizontal cordenate(colum number).
+        matrix1_aux=[]                  # These 3 matrix's are used to create the Path and Pheromon Matrix's 
+        matrix2_aux=[]
+        matrix3_aux=[]
 
         for i in f_content:
             for  j in i:    
                 if(j==' '):
-                    matrix2.append(0)
+                    matrix2_aux.append(0)
                 elif(j=='S'):
-                    matrix2.append(2)
+                    matrix2_aux.append(2)
                 elif(j=='E'):
-                    matrix2.append(3)
+                    matrix2_aux.append(3)
                 else:
-                    matrix2.append(1)
-            aux=matrix2.copy()
-            matrix1.append(aux)
-            matrix2.clear()
+                    matrix2_aux.append(1)
+            aux=matrix2_aux.copy()
+            matrix1_aux.append(aux)
+            matrix2_aux.clear()
         
         f.close()
         
-
-        for line in matrix1:
+        for line in matrix1_aux:
             for i in range(0,len(line),2):
-                matrix2.append(line[i])
-            aux=matrix2.copy()
-            matrix3.append(aux)
-            matrix2.clear()
+                matrix2_aux.append(line[i])
+            aux=matrix2_aux.copy()
+            matrix3_aux.append(aux)
+            matrix2_aux.clear()
         
-        self.PathMatrix=matrix3.copy()
-        matrix3.clear()
+        self.PathMatrix=matrix3_aux.copy()
+        matrix3_aux.clear()
          
         for i in self.PathMatrix:
             if (2 in i):
@@ -188,13 +188,13 @@ class Labrinth:
                     self.pnt_end.append(self.PathMatrix.index(i)) 
             for j in i:
                 if(j==1):
-                    matrix2.append(0)
+                    matrix2_aux.append(0)
                 else:
-                    matrix2.append(FeromInit)
+                    matrix2_aux.append(FeromInit)
 
-            aux=matrix2.copy()
-            self.FeromonMatrix.append(aux)
-            matrix2.clear()
+            aux=matrix2_aux.copy()
+            self.PheromonMatrix.append(aux)
+            matrix2_aux.clear()
 
     def Atualizapath(self,Formiga):
             posI=Formiga.Caminho[-1][1]
@@ -207,7 +207,7 @@ class Labrinth:
                 self.PathMatrix[pnt[1]][pnt[0]] = 0 
 
     def EvaporaFerom(self):
-         for l in self.FeromonMatrix:
+         for l in self.PheromonMatrix:
             for j in range(len(l)):
                 if (l[j] > FeromMin):
                     l[j]=l[j]-EvapoRate
@@ -217,10 +217,10 @@ class Labrinth:
     def AtualizaFerom(self,Formiga,plus):
        
         for pnt in Formiga.Caminho:
-            if( self.FeromonMatrix[pnt[1]][pnt[0]]<FeromMax):
-                self.FeromonMatrix[pnt[1]][pnt[0]]= self.FeromonMatrix[pnt[1]][pnt[0]] + FeromRate + plus
-                if( self.FeromonMatrix[pnt[1]][pnt[0]]>FeromMax):
-                    self.FeromonMatrix[pnt[1]][pnt[0]]=FeromMax
+            if( self.PheromonMatrix[pnt[1]][pnt[0]]<FeromMax):
+                self.PheromonMatrix[pnt[1]][pnt[0]]= self.PheromonMatrix[pnt[1]][pnt[0]] + FeromRate + plus
+                if( self.PheromonMatrix[pnt[1]][pnt[0]]>FeromMax):
+                    self.PheromonMatrix[pnt[1]][pnt[0]]=FeromMax
 
 
     def print(self):
@@ -231,7 +231,7 @@ class Labrinth:
         print("\n")
         print("Matrix de Feromonio:")
         print("\n")
-        for i in self.FeromonMatrix:
+        for i in self.PheromonMatrix:
             print(i)
         print("\n")
 
@@ -272,8 +272,6 @@ def PRINTA(formiga,m2,mferomonio):
             b=FeromMin
             x=mferomonio[i][j]
             y=int(a*x-b)
-
-
          
             if m2[i][j] == 0:
                 pygame.draw.rect(tela, (0, 0, 0),[j*px,i*px,px,px])
@@ -285,10 +283,6 @@ def PRINTA(formiga,m2,mferomonio):
             
             if m2[i][j] == 4:
                 pygame.draw.rect(tela, (202, 205, 0), [j*px,i*px, px, px])
-
-           
-            
-            
             
             if m2[i][j] == 2:
                 pygame.draw.rect(tela, (0, 0, 255), [j*px,i*px, px, px])
@@ -299,12 +293,10 @@ def PRINTA(formiga,m2,mferomonio):
                         
     
         
-              
-        
 #Inicio do programa
 
 
-mapa = Labrinth("M2.txt")
+mapa = Labrinth("Colonia\LabirintoExemplo01.txt")
 
 Colonia=[]
 CaminhosEcontrados=[]
@@ -319,7 +311,7 @@ for i in range(NC):
         m.caminhoLivre(mapa)
         while(not m.find()):
             m.choose(mapa)
-            PRINTA(m,mapa.PathMatrix,mapa.FeromonMatrix)
+            PRINTA(m,mapa.PathMatrix,mapa.PheromonMatrix)
             mapa.Atualizapath(m)
             m.caminhoLivre(mapa)
           
